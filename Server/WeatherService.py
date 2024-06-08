@@ -22,21 +22,66 @@ class WeatherService():
         }
         responses = self.openmeteo.weather_api(self.url, params=params)
 
-        for response in responses:
-            daily = response.Daily()
-            daily_temperature_2m = daily.Variables(0).ValuesAsNumpy()
-            date = pd.date_range(
-                start = pd.to_datetime(daily.Time(), unit = "s", utc = True),
-                end = pd.to_datetime(daily.TimeEnd(), unit = "s", utc = True),
-                freq = pd.Timedelta(seconds = daily.Interval()),
-                inclusive = "left"
-                )
-            daily_data = {
-                "year": date.year,
-                "month": date.month,
-                "temperature": daily_temperature_2m
-                }
+        response = responses[0]
+        daily = response.Daily()
+        daily_temperature_2m = daily.Variables(0).ValuesAsNumpy()
+        date = pd.date_range(
+            start = pd.to_datetime(daily.Time(), unit = "s", utc = True),
+            end = pd.to_datetime(daily.TimeEnd(), unit = "s", utc = True),
+            freq = pd.Timedelta(seconds = daily.Interval()),
+            inclusive = "left"
+            )
+        daily_data = {
+            "year": date.year,
+            "month": date.month,
+            "temperature": daily_temperature_2m
+            }
 
-            hourly_dataframe = pd.DataFrame(data = daily_data)
-            hourly_dataframe = hourly_dataframe.groupby(["year", "month"])["temperature"].mean().reset_index()
-            return hourly_dataframe.to_json(orient='records', date_format='iso')
+        hourly_dataframe = pd.DataFrame(data = daily_data)
+        hourly_dataframe = hourly_dataframe.groupby(["year", "month"])["temperature"].mean().reset_index()
+        return hourly_dataframe.to_json(orient='records', date_format='iso')
+    
+    def getStatistics1(self, latiutude, longitude, startDate, endDate):
+        params = {
+        "latitude": latiutude,
+        "longitude": longitude,
+        "start_date": startDate,
+        "end_date": endDate,
+        "timezone": "auto",
+        "daily": ["temperature_2m_mean", "rain_sum"]
+        }
+        responses = self.openmeteo.weather_api(self.url, params=params)
+        response = responses[0]
+        daily = response.Daily()
+        daily_temperature_2m_mean = daily.Variables(0).ValuesAsNumpy()
+        daily_rain_sum = daily.Variables(1).ValuesAsNumpy()
+        date = pd.date_range(
+            start = pd.to_datetime(daily.Time(), unit = "s", utc = True),
+            end = pd.to_datetime(daily.TimeEnd(), unit = "s", utc = True),
+            freq = pd.Timedelta(seconds = daily.Interval()),
+            inclusive = "left"
+        )
+        daily_data = {"date": date}
+        daily_data["temperature_2m_mean"] = daily_temperature_2m_mean
+        daily_data["rain_sum"] = daily_rain_sum
+        daily_data["prev_day"] = daily_data["date"] - pd.Timedelta(days = 1)
+        daily_dataframe = pd.DataFrame(data = daily_data)
+
+        result = pd.merge(daily_dataframe, daily_dataframe, left_on='date', right_on='prev_day', how='inner')
+        result = result.dropna()
+        result = result.drop(columns=['prev_day_x', 'prev_day_y', 'date_x'])
+        result = result.rename(columns={
+            'date_y': 'date', 
+            'rain_sum_x': 'rain_sum_prev_day', 
+            'temperature_2m_mean_x': 'temperature_prev_day', 
+            'rain_sum_y': 'rain_sum',
+            'temperature_2m_mean_y': 'temperature'})
+        result["temp_differerence"] = np.round(result["temperature"] - result["temperature_prev_day"])
+        result["rain_difference"] = result["rain_sum"] - result["rain_sum_prev_day"]
+        result.drop(columns= ["temperature", "temperature_prev_day", "rain_sum_prev_day", "rain_sum"], inplace=True)
+        result = result.groupby(["temp_differerence"]).agg({"date": 'size', 'rain_difference': 'mean'}).reset_index()
+        result = result.rename(columns={"date": "count", "rain_difference": "mean_rain_difference"})
+        result = result.where(result["count"] > 100).dropna()
+        result = result.sort_values(by="temp_differerence")
+
+        return result.to_json(orient='records', date_format='iso')
