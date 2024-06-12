@@ -177,7 +177,7 @@ class WeatherService():
         forecast, archive = self.getForecastAndArchive(latitude, longitude, pastDays, model)
         fjson = forecast.to_json(orient='records', date_format='iso')
         ajson = archive.to_json(orient='records', date_format='iso')
-        return f'{{"archive":{ajson},"fjson":{fjson}}}' 
+        return f'{{"archive":{ajson},"forecast":{fjson}}}' 
     # Difference between forecast and actual data as JSON
     def getDiffJson(self, latitude, longitude, pastDays, model):
         forecast, archive = self.getForecastAndArchive(latitude, longitude, pastDays, model)

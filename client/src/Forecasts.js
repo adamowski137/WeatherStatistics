@@ -6,7 +6,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 function Forecasts() {
         
     const addres = "http://localhost:5000/api/archive-forecast";
-    const [data, setData] = useState([]);
+    const [archive, setArchive] = useState([]);
+    const [forecast, setForecast] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [settings, setSettings] = useState({
         latitude: 52.52,
@@ -20,8 +21,10 @@ function Forecasts() {
             const url = `${addres}?${queryParams}`;
             const response = await fetch(url);
             const data = await response.json();
-            console.log(data)
-            setData(data);
+            console.log(data.archive)
+            console.log(data.forecast)
+            setArchive(data.archive);
+            setForecast(data.forecast);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -29,7 +32,6 @@ function Forecasts() {
     useEffect(() => {
         fetchData();
     }, []);
-
 
     return (
         <Box height={"100%"} width={"100%"} display="flex" alignItems="center" justifyContent="center" flexDirection="column">
@@ -51,9 +53,12 @@ function Forecasts() {
             </Dialog>
 
             <LineChart
-                xAxis={[{data: data.map(item => item.temp_differerence), label: "Temperature difference [°C]"}]}
+                xAxis={[{data: archive.map(item => new Date(item.date)), label: "Temperature difference [°C]"}]}
                 yAxis={[{ label: "Rainfall Difference [mm]" }]}
-                series={[{ data: data.map(item => item.mean_rain_difference), showMark: false}]}
+                series={[
+                    { data: archive.map(item => item.temperature_2m), showMark: false},
+                    { data: forecast.map(item => item.temperature_2m), showMark: false}
+                ]}
                 grid={{ vertical: true, horizontal: true }}
             />
         </Box>
