@@ -22,5 +22,37 @@ def statitics1():
     endDate = request.args.get('endDate')
     return WeatherService.getStatistics1(latitude, longitude, startDate, endDate)
 
+@app.route('/api/archive-forecast', methods=['GET'])
+def archiveForecast():
+    latitude = request.args.get('latitude')
+    longitude = request.args.get('longitude')
+    pastDays = int(request.args.get('pastDays'))
+    model = request.args.get('model')
+    return WeatherService.getForecastArchiveJson(latitude, longitude, pastDays, model)
+
+@app.route('/api/archive-forecast/diff', methods=['GET'])
+def archiveForecastDiff():
+    latitude = request.args.get('latitude')
+    longitude = request.args.get('longitude')
+    pastDays = int(request.args.get('pastDays'))
+    model = request.args.get('model')
+    return WeatherService.getDiffJson(latitude, longitude, pastDays, model)
+
+@app.route('/api/archive-forecast/diff-by-hour', methods=['GET'])
+def archiveForecastDiffByHour():
+    latitude = request.args.get('latitude')
+    longitude = request.args.get('longitude')
+    pastDays = int(request.args.get('pastDays'))
+    model = request.args.get('model')
+    return WeatherService.getAvgDiffByHourJson(latitude, longitude, pastDays, model)
+
+@app.route('/api/archive-forecast/soft-diff-by-hour', methods=['GET'])
+def archiveForecastSoftDiffByHour():
+    latitude = request.args.get('latitude')
+    longitude = request.args.get('longitude')
+    pastDays = int(request.args.get('pastDays'))
+    model = request.args.get('model')
+    return WeatherService.getSoftMaxDiffByHourJson(latitude, longitude, pastDays, model)
+
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
