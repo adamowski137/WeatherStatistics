@@ -26,7 +26,7 @@ def statitics1():
 def archiveForecast():
     latitude = request.args.get('latitude')
     longitude = request.args.get('longitude')
-    pastDays = request.args.get('pastDays')
+    pastDays = int(request.args.get('pastDays'))
     model = request.args.get('model')
     return WeatherService.getForecastArchiveJson(latitude, longitude, pastDays, model)
 
@@ -34,7 +34,7 @@ def archiveForecast():
 def archiveForecastDiff():
     latitude = request.args.get('latitude')
     longitude = request.args.get('longitude')
-    pastDays = request.args.get('pastDays')
+    pastDays = int(request.args.get('pastDays'))
     model = request.args.get('model')
     return WeatherService.getDiffJson(latitude, longitude, pastDays, model)
 
@@ -42,7 +42,7 @@ def archiveForecastDiff():
 def archiveForecastDiffByHour():
     latitude = request.args.get('latitude')
     longitude = request.args.get('longitude')
-    pastDays = request.args.get('pastDays')
+    pastDays = int(request.args.get('pastDays'))
     model = request.args.get('model')
     return WeatherService.getAvgDiffByHourJson(latitude, longitude, pastDays, model)
 
@@ -50,7 +50,7 @@ def archiveForecastDiffByHour():
 def archiveForecastSoftDiffByHour():
     latitude = request.args.get('latitude')
     longitude = request.args.get('longitude')
-    pastDays = request.args.get('pastDays')
+    pastDays = int(request.args.get('pastDays'))
     model = request.args.get('model')
     return WeatherService.getSoftMaxDiffByHourJson(latitude, longitude, pastDays, model)
 
