@@ -145,9 +145,8 @@ class WeatherService():
         return hourly_dataframe.dropna()
     # Fetch past forecast and archived meteo data
     def getForecastAndArchive(self, latitude, longitude, pastDays, model):
-        date_x_days_ago = datetime.now() - timedelta(days=pastDays)
-        startDate = date_x_days_ago.strftime('%Y-%m-%d')
-        endDate = datetime.now().strftime('%Y-%m-%d')
+        startDate = (datetime.now() - timedelta(days=pastDays)).strftime('%Y-%m-%d')
+        endDate = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
         forecast = self.fetchForecast(latitude, longitude, pastDays, model)
         archive = self.fetchArchive(latitude, longitude, startDate, endDate)
         forecast = forecast[:len(archive)]
