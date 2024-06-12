@@ -11,6 +11,9 @@ class WeatherService():
         self.openmeteo = openmeteo_requests.Client(session = self.retry_session)
         self.url = "https://archive-api.open-meteo.com/v1/archive"
 
+        self.data_fetched = ["temperature_2m", "relative_humidity_2m", "apparent_temperature", "precipitation"]
+        self.column_names = ["temperature_2m", "relative_humidity_2m", "apparent_temperature", "precipitation"]
+
     def getAverageTemperature(self, latiutude, longitude):
         params = {
         "latitude": latiutude,
@@ -85,3 +88,30 @@ class WeatherService():
         result = result.sort_values(by="temp_differerence")
 
         return result.to_json(orient='records', date_format='iso')
+
+    def fetchForecast(self, latitude = 52.52, longitude = 13.41, past_days = 92, forecast_days = 1, model = "ecmwf_ifs04"):
+        url = "https://previous-runs-api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": latitude,
+            "longitude": longitude,
+            "past_days": past_days,
+            "forecast_days": forecast_days,
+            "hourly": self.data_fetched,
+            "models": model
+        }
+        responses = self.openmeteo.weather_api(url, params=params)
+        # Process hourly data. The order of variables needs to be the same as requested.
+        response = responses[0]
+        hourly = response.Hourly()
+
+        hourly_data = {"date": pd.date_range(
+            start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
+            end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
+            freq = pd.Timedelta(seconds = hourly.Interval()),
+            inclusive = "left"
+        )}
+        for i, col_name in enumerate(self.column_names):
+            hourly_data[col_name] = hourly.Variables(i).ValuesAsNumpy()
+            
+        hourly_dataframe = pd.DataFrame(data = hourly_data)
+        return hourly_dataframe.dropna() 
