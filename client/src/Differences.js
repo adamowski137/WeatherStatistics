@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
-import { Box, Typography, TextField, Switch } from '@mui/material';
+import { Box, Typography, TextField, Switch, Checkbox } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -8,22 +8,27 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Grid from '@mui/material/Grid';
 
-function Forecasts() {
+function Differences() {
 
-    const forecastAddress = "http://localhost:5000/api/archive-forecast";
-    const diffAddress = "http://localhost:5000/api/archive-forecast/diff";
+    const forecastAddress = "http://localhost:5000/api/archive-forecast/diff-by-hour";
+    const diffAddress = "http://localhost:5000/api/archive-forecast/soft-diff-by-hour";
     let address;
     const [series, setSeries] = useState([]);
     const [xAxis, setX] = useState([]);
     const [yAxis, setY] = useState([]);
     const [isSwitched, setSwitch] = useState(false)
-    const [field, setField] = useState("temperature_2m")
     const [settings, setSettings] = useState({
         latitude: 52.52,
         longitude: 13.41,
         pastDays: 14,
         model: "ecmwf_ifs04"
     });
+    const [displaySettings, setDisplaySettings] = useState({
+        "temperature_2m": true,
+        "apparent_temperature": true,
+        "relative_humidity_2m": true,
+        "precipitation": true
+    })
     const [data, setData] = useState()
     const fieldNames = {
         "temperature_2m": "Temperature [°C]",
@@ -35,10 +40,14 @@ function Forecasts() {
     const fetchData = async () => {
         try {
             const queryParams = new URLSearchParams(settings);
-            if (isSwitched)
+            if (isSwitched) {
                 address = diffAddress
-            else
+                setY([{ label: "Relative difference" }])
+            }
+            else {
                 address = forecastAddress
+                setY([{ label: "Difference" }])
+            }
             const url = `${address}?${queryParams}`;
             const response = await fetch(url);
             const data = await response.json();
@@ -50,78 +59,60 @@ function Forecasts() {
 
     const updateChart = () => {
         if (!data) return
-        setY([{ label: fieldNames[field] }])
-        if (isSwitched) {
-            setSeries([
-                { data: data.map(item => item[field]), label: 'Difference', showMark: false },
-            ])
-            setX([{
-                data: data.map(item => new Date(item.date)),
-                label: "Date",
-                scaleType: "time"
-            }])
-        }
-        else {
-            setSeries([
-                { data: data.archive.map(item => item[field]), label: 'Archive', showMark: false },
-                { data: data.forecast.map(item => item[field]), label: 'Forecast', showMark: false }
-            ])
-            setX([{
-                data: data.archive.map(item => new Date(item.date)),
-                label: "Date",
-                scaleType: "time",
-                tickMinStep: 3600 * 1000 * 24
-            }])
-        }
+        const series = 
+        setSeries(
+            Object.keys(fieldNames)
+                .filter(key => displaySettings[key])
+                .map(key => {
+                    return {
+                        data: data.map(item => item[key]),
+                        id: key,
+                        label: fieldNames[key],
+                        showMark: false
+                    }}))
+        setX([{
+            data: data.map(item => item.date),
+            label: "Hour of a day",
+        }])
     }
     useEffect(() => {
         fetchData();
-    }, [isSwitched, settings]);
+    }, [isSwitched, settings, displaySettings]);
 
     useEffect(() => {
         updateChart();
-    }, [data, field])
+    }, [data])
+
     const handleSwitch = (e) => {
         setSwitch(e.target.checked)
-    }
-    const handleSelect = (e) => {
-        setField(e.target.value)
     }
     const handleChange = (e) => {
         const { name, value } = e.target;
         setSettings((prevSettings) => ({
-        ...prevSettings,
-        [name]: value,
+            ...prevSettings,
+            [name]: value,
+        }));
+    }
+    const handleDisplaySettings = (e) => {
+        const { name, checked } = e.target;
+        setDisplaySettings((prevSettings) => ({
+            ...prevSettings,
+            [name]: checked,
         }));
     }
 
     return (
         <Box height={"100%"} width={"100%"} display="flex" alignItems="center" justifyContent="center" flexDirection="column">
             <FormControl component="fieldset" variant="standard" >
-                <Typography>This chart represents difference between forcasts and actual weather.</Typography>
+                <Typography>This chart represents average difference between forcasts and actual weather grouped by hour of a day.</Typography>
                 <FormGroup>
                     <FormControlLabel
                         control={
                             <Switch name="diffSwitch" onChange={handleSwitch} checked={isSwitched} />
                         }
-                        label="Show difference"
+                        label="Apply soft-max"
                     />
                     <Grid container spacing={2} sx={{ width: '100%', marginBottom: 2 }} alignItems="center">
-                        <Grid item xs={4} sm={3}>
-                            <FormControl fullWidth>
-                            <Select
-                                value={field}
-                                label="Component"
-                                onChange={handleSelect}
-                                sx={{ marginTop: '1px' }}
-                                
-                            >
-                                {Object.keys(fieldNames).map(
-                                    (key, index) => <MenuItem value={key}>{fieldNames[key]}</MenuItem>
-                                )}
-                            </Select>
-                            </FormControl>
-                        </Grid>
                         <Grid item xs={4} sm={2}>
                             <TextField
                                 fullWidth
@@ -157,19 +148,37 @@ function Forecasts() {
                         </Grid>
                         <Grid item xs={4} sm={2}>
                             <FormControl>
-                            <Select
-                                value={settings.model}
-                                label="Component"
-                                onChange={handleChange}
-                                name="model"
-                                sx={{ marginTop: '1px' }}
-                            >
-                                { models.map(model => <MenuItem value={model}>{model}</MenuItem>) }
-                            </Select>
+                                <Select
+                                    value={settings.model}
+                                    label="Component"
+                                    onChange={handleChange}
+                                    name="model"
+                                    sx={{ marginTop: '1px' }}
+                                >
+                                    {models.map(model => <MenuItem value={model}>{model}</MenuItem>)}
+                                </Select>
                             </FormControl>
                         </Grid>
                     </Grid>
                 </FormGroup>
+            </FormControl>
+            <FormControl>
+                <Box display="flex" flexDirection="row" justifyContent="center">
+                    {
+                        Object.keys(fieldNames).map((key, index) =>
+                            <FormControlLabel
+                                value="top"
+                                control={<Checkbox
+                                    checked={displaySettings[key]}
+                                    onChange={handleDisplaySettings}
+                                    name={key}
+                                />}
+                                label={fieldNames[key]}
+                                labelPlacement="end"
+                            />
+                        )
+                    }
+                </Box>
             </FormControl>
             <LineChart
                 xAxis={xAxis}
@@ -181,4 +190,4 @@ function Forecasts() {
     );
 }
 
-export default Forecasts;
+export default Differences;
