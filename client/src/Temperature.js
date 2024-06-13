@@ -125,7 +125,7 @@ function Temperature() {
                 <Box  display="flex"  justifyContent="center" flexDirection="column" gap="10px" padding="10px">
                     <Stack direction="column">
                         {seriesSettings.map(x => 
-                        <Accordion>
+                        <Accordion key={x.id}>
                             <AccordionSummary>
                                 <Box display="flex" justifyContent="space-between" width="100%">
                                     <Typography>{x.name}</Typography>
@@ -142,11 +142,11 @@ function Temperature() {
                                 </Box>  
                             </AccordionDetails>
                         </Accordion>)}
-                        <Button variant="contained" onClick={() => setSeriesSettings([...seriesSettings, {id: Math.max(seriesSettings.map(x => x.id)) + 1, name: "Warsaw", latitude: 52.52, longitude: 21, startDate: "1940-01-02", endDate: "2022-12-31"}])}>
+                        
+                        <Button variant="contained" onClick={() => setSeriesSettings([...seriesSettings, {id: Math.max(...seriesSettings.map(x => Number(x.id))) + 1, name: "Warsaw", latitude: 52.52, longitude: 21, startDate: "1940-01-02", endDate: "2022-12-31"}])}>
                             <AddCircleOutlineIcon />
                         </Button>
                     </Stack>
-                    <Typography>Settings</Typography>
                     <Button variant="contained" onClick={() => {
                         fetchData();
                         setDialogOpen(false);
