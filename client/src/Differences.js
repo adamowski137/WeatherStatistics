@@ -36,7 +36,7 @@ function Differences() {
         "relative_humidity_2m": "Relative humidity [%]",
         "precipitation": "Precipitation [mm]"
     }
-    const models = ["icon_seamless", "icon_global", "icon_eu", "icon_d2", "gfs_seamless", "gfs025", "gfs05", "ecmwf_ifs04", "ecmwf_ifs025", "gem_global", "bom_access_global_ensemble"]
+    const models = ["ecmwf_ifs04", "ecmwf_ifs025", "ecmwf_aifs025", "cma_grapes_global", "bom_access_global", "metno_nordic", "gfs_seamless", "gfs_global", "gfs_hrrr", "gfs_graphcast025", "jma_seamless", "jma_msm", "jma_gsm", "icon_seamless", "icon_global", "icon_eu", "icon_d2", "gem_seamless", "gem_global", "gem_regional", "gem_hrdps_continental", "meteofrance_seamless", "meteofrance_arpege_world", "meteofrance_arpege_europe", "meteofrance_arome_france", "meteofrance_arome_france_hd", "arpae_cosmo_seamless", "arpae_cosmo_2i", "arpae_cosmo_2i_ruc", "arpae_cosmo_5m"]
     const fetchData = async () => {
         try {
             const queryParams = new URLSearchParams(settings);
