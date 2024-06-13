@@ -35,14 +35,11 @@ function StatisticsTest() {
             }
         }, 500);
     }
-    const handleStop = () => {
-        // clearInterval(intervalId);
-    };
 
 
     return (
         <Box height={"100%"} width={"100%"} display="flex" alignItems="center" justifyContent="center" flexDirection="column">
-            <Typography>This chart represents how temperature was changing inb the span of 30 years</Typography>
+            <Typography>This chart represents how temperature was changing in the span of 30 years</Typography>
             <LineChart
                 xAxis={[{data: data.filter(item => item.year === currentYear).map(item => item.month)}]}
                 yAxis={[{ min: Math.min(...data.map(item => item.temperature)), max: Math.max(...data.map(item => item.temperature)) }]}
@@ -51,7 +48,6 @@ function StatisticsTest() {
             />
             <Typography>Year: {currentYear}</Typography>
             <Button variant="contained" onClick={handlePlay}>Play</Button>
-            <Button variant="contained" onClick={handleStop}>Stop</Button>
         </Box>
     );
 }

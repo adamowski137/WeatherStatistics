@@ -15,6 +15,8 @@ class WeatherService():
         self.data_fetched = ["temperature_2m", "relative_humidity_2m", "apparent_temperature", "precipitation"]
         self.column_names = ["temperature_2m", "relative_humidity_2m", "apparent_temperature", "precipitation"]
 
+
+    # test function for testing the chart
     def getAverageTemperature(self, latiutude, longitude):
         params = {
         "latitude": latiutude,
@@ -45,7 +47,9 @@ class WeatherService():
         hourly_dataframe = hourly_dataframe.groupby(["year", "month"])["temperature"].mean().reset_index()
         return hourly_dataframe.to_json(orient='records', date_format='iso')
     
+    # Get statistics for temperature and rain change
     def getStatistics1(self, latiutude, longitude, startDate, endDate):
+        # query parameters
         params = {
         "latitude": latiutude,
         "longitude": longitude,
@@ -54,9 +58,12 @@ class WeatherService():
         "timezone": "auto",
         "daily": ["temperature_2m_mean", "rain_sum"]
         }
+
+        # get response
         responses = self.openmeteo.weather_api(self.url, params=params)
         response = responses[0]
         daily = response.Daily()
+        # convert to pandas dataframe
         daily_temperature_2m_mean = daily.Variables(0).ValuesAsNumpy()
         daily_rain_sum = daily.Variables(1).ValuesAsNumpy()
         date = pd.date_range(
@@ -71,8 +78,11 @@ class WeatherService():
         daily_data["prev_day"] = daily_data["date"] - pd.Timedelta(days = 1)
         daily_dataframe = pd.DataFrame(data = daily_data)
 
+        # join the dataframe with itself to get the previous day's data
         result = pd.merge(daily_dataframe, daily_dataframe, left_on='date', right_on='prev_day', how='inner')
         result = result.dropna()
+
+        # delete unnecessary columns and rename columns
         result = result.drop(columns=['prev_day_x', 'prev_day_y', 'date_x'])
         result = result.rename(columns={
             'date_y': 'date', 
@@ -80,14 +90,19 @@ class WeatherService():
             'temperature_2m_mean_x': 'temperature_prev_day', 
             'rain_sum_y': 'rain_sum',
             'temperature_2m_mean_y': 'temperature'})
+        
+        # calculate the difference between the current day and the previous day
         result["temp_differerence"] = np.round(result["temperature"] - result["temperature_prev_day"])
         result["rain_difference"] = result["rain_sum"] - result["rain_sum_prev_day"]
         result.drop(columns= ["temperature", "temperature_prev_day", "rain_sum_prev_day", "rain_sum"], inplace=True)
+
+        # group by the temperature difference and calculate the mean of the rain difference
         result = result.groupby(["temp_differerence"]).agg({"date": 'size', 'rain_difference': 'mean'}).reset_index()
         result = result.rename(columns={"date": "count", "rain_difference": "mean_rain_difference"})
         result = result.where(result["count"] > 100).dropna()
         result = result.sort_values(by="temp_differerence")
 
+        # return values as json
         return result.to_json(orient='records', date_format='iso')
 
     # Fetch past forecasts

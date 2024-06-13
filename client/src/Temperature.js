@@ -8,7 +8,7 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 
-function Statistics1() {
+function Temperature() {
         
     const addres = "http://localhost:5000/api/statistics1";
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -163,4 +163,4 @@ function Statistics1() {
     );
 }
 
-export default Statistics1;
+export default Temperature;
