@@ -1,0 +1,7 @@
+Flask==3.0.3
+Flask_Cors==4.0.1
+numpy==2.0.1
+openmeteo_requests==1.2.1
+pandas==2.2.2
+requests_cache==1.2.1
+retry_requests==2.0.0
