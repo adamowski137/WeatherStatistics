@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, g
 from flask_cors import CORS, cross_origin
 import pandas as pd
 from WeatherService import WeatherService
+from waitress import serve
 
 WeatherService = WeatherService()
 
@@ -54,5 +55,4 @@ def archiveForecastSoftDiffByHour():
     model = request.args.get('model')
     return WeatherService.getSoftMaxDiffByHourJson(latitude, longitude, pastDays, model)
 
-if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+serve(app)
